@@ -1,0 +1,24 @@
+{
+  "name": "seminar24_client_3",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.12",
+    "@inrupt/solid-client-authn-browser": "^1.7.2",
+    "n3": "^1.11.1",
+    "core-js": "^3.6.5",
+    "primeflex": "^3.1.2",
+    "primeicons": "^5.0.0",
+    "primevue": "^3.10.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.1.4",
+    "vite": "^5.4.10"
+  }
+}
