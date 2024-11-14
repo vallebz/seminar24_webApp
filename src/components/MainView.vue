@@ -1,40 +1,136 @@
 <template>
 	<div class="main">
-		<h1>Main View</h1>
-		<p>Hier kommen irgendwann mal tolle Sachen hin.</p>
-		<Button @click="getWebID">Display WebID</Button>
-		<p v-if="isDisplayingWebId">WebID: {{ displayedWebId }}</p>
+		<div>
+			<h1>Main View</h1>
+		</div>
+		<div>
+			<Button @click="getWebID">Display WebID</Button>
+		</div>
+		<div>
+			<p v-if="showWebId">WebID: {{ displayedWebId }}</p>
+		</div>
+		<div>
+			<Button @click="getResPod">Get Resource from Pod</Button>
+			<Button @click="fetchFileStructure">Post Resource to Pod</Button>
+		</div>
+		<div>
+			<BlockUI v-if="showResBody">
+				<Panel :header="displayedResURI">
+					<p class="m-1">{{ displayedResBody }}</p>
+				</Panel>
+			</BlockUI>
+		</div>
+		<SolidFileTree v-if="sessionInfo.isLoggedIn" :podUri="getBaseUriFromKnownUrl(sessionInfo.webId)" />
 	</div>
+	<Toast position="bottom-right" />
 </template>
 
 <script setup>
-import { useSolidSession } from "/src/composables/useSolidSession";
-const { sessionInfo } = useSolidSession();
-import { ref } from 'vue';
+import SolidFileTree from "/src/components/SolidFileTree.vue"
 
-const displayedWebId = ref("Nicht verfügbar.");
-const isDisplayingWebId = ref(false);
+import { ref, reactive, onMounted } from "vue"
+import { useToast } from "primevue/usetoast"
 
-const getWebID = () => {
+import { useSolidSession } from "/src/composables/useSolidSession"
+import { getResource, postResource, putResource, parseToN3 } from "/src/lib/solidRequests"
+
+
+const { sessionInfo, authFetch } = useSolidSession()
+const toast = useToast()
+
+const displayedWebId = ref("Nicht verfügbar.")
+const displayedResBody = ref()
+const displayedResURI = ref()
+
+const showWebId = ref(false)
+const showResBody = ref(false)
+
+function getBaseUriFromKnownUrl(url) {
+	try {
+		// Create a URL object to manipulate the path
+		const urlObj = new URL(url);
+		
+		// Remove any subdirectories and fragment by setting the pathname to "/" and hash to ""
+		urlObj.pathname = "/";
+		urlObj.hash = "";
+
+		console.log("Solid Pod Base URI:\n" + urlObj.href);
+		
+		return urlObj.href;
+	} catch (error) {
+		console.error("Invalid URL provided:", error);
+		return null;
+	}
+}
+
+
+function getWebID() {
 
 	if (sessionInfo.webId) {
-		displayedWebId.value = sessionInfo.webId;
+		displayedWebId.value = sessionInfo.webId
 	} else {
-		displayedWebId.value = "Nicht verfügbar.";
+		displayedWebId.value = "Nicht verfügbar."
 	}
 
-	if (isDisplayingWebId.value) {
-		isDisplayingWebId.value = false;
-		return;
+	if (showWebId.value) {
+		showWebId.value = false
+		return
 	}
 
-	isDisplayingWebId.value = true;
+	showWebId.value = true
+}
+
+/**
+ * HTTP GET request to retrieve selected resource from User's Solid Pod
+ * @param URI: path of resource to retrieve
+ * @returns body of retrieved resource
+ */
+async function getResPod() {
+	// Check if user is logged in
+	if (!sessionInfo.webId) {
+		toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Not logged in.",
+            life: 5000,
+		})
+		return
+	}
+
+	const resURI = sessionInfo.webId.replace("/profile/card#me", "/") + "AIFB_Seminar24/documents/test_01.ttl"
+	displayedResURI.value = resURI
+
+	const resBody = await getResource(resURI).then((resp) => resp.text())
+	displayedResBody.value = resBody
+	showResBody.value = true
+
+	toast.add({
+		severity: "success",
+		detail: "Successfuly requested resource.",
+		life: 5000,
+	})
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 
 .main {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 	margin: 20px;
+}
+
+.p-button {
+  margin: 10px;
+}
+
+.p-panel {
+	margin: 10px;
+}
+
+.p-blockUI {
+	margin: 10px;
 }
 </style>
