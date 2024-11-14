@@ -20,7 +20,6 @@ import ToastService from "primevue/toastservice";
 import BlockUI from "primevue/blockui";
 import Panel from "primevue/panel";
 import Tree from 'primevue/tree';
-import TreeNode from 'primevue/treenode';
 
 import "primeflex/primeflex.css"; // layouts
 import "primevue/resources/themes/vela-green/theme.css"; // theme
@@ -48,7 +47,7 @@ app.component("ProgressBar", ProgressBar);
 app.component("BlockUI", BlockUI);
 app.component("Panel", Panel);
 app.component("Tree", Tree);
-app.component("TreeNode", TreeNode);
+
 
 
 app.directive("tooltip", Tooltip);
