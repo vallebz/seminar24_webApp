@@ -10,17 +10,17 @@
 			<p v-if="showWebId">WebID: {{ displayedWebId }}</p>
 		</div>
 		<div>
-			<Button @click="getResPod">Get Resource from Pod</Button>
-			<Button @click="fetchFileStructure">Post Resource to Pod</Button>
-		</div>
-		<div>
 			<BlockUI v-if="showResBody">
 				<Panel :header="displayedResURI">
 					<p class="m-1">{{ displayedResBody }}</p>
 				</Panel>
 			</BlockUI>
 		</div>
-		<SolidFileTree v-if="sessionInfo.isLoggedIn" :podUri="getBaseUriFromKnownUrl(sessionInfo.webId)" />
+		<SolidFileTree @updateSelection="handleUpdateSelection" v-if="sessionInfo.isLoggedIn" :podUri="getBaseUriFromKnownUrl(sessionInfo.webId)" />
+		<div>
+			<Button @click="getResPod">Get Resource from Pod</Button>
+			<Button @click="">Post Resource to Pod</Button>
+		</div>
 	</div>
 	<Toast position="bottom-right" />
 </template>
@@ -44,6 +44,12 @@ const displayedResURI = ref()
 
 const showWebId = ref(false)
 const showResBody = ref(false)
+
+const selectedFile = ref(null)
+
+function handleUpdateSelection(data) {
+	selectedFile.value = Object.keys(data)[0];
+}
 
 function getBaseUriFromKnownUrl(url) {
 	try {
@@ -97,7 +103,7 @@ async function getResPod() {
 		return
 	}
 
-	const resURI = sessionInfo.webId.replace("/profile/card#me", "/") + "AIFB_Seminar24/documents/test_01.ttl"
+	const resURI = selectedFile.value
 	displayedResURI.value = resURI
 
 	const resBody = await getResource(resURI).then((resp) => resp.text())
