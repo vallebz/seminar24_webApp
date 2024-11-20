@@ -4,8 +4,8 @@ import HeaderBar from './components/standard/HeaderBar.vue'
 </script>
 
 <template>
-  <HeaderBar />
-  <MainView />
+  <HeaderBar style="z-index: 10;" />
+  <MainView style="z-index: 1;" />
 </template>
 
 <style lang="scss">

@@ -1,6 +1,6 @@
 <template>
   <div>
-	<h2 style="text-align: center;">Own Solid Pod Files</h2>
+	<h2 style="text-align: center;">Solid Pod Files</h2>
     <div v-if="isLoading">Loading files...</div>
     <div class="card" v-if="!isLoading">
       <Tree v-model:expandedKeys="expandedKeys" :value="treeNodes" selectionMode="single" v-model:selectionKeys="selectedKey" />
@@ -46,7 +46,7 @@ const getSubdirectoriesFromUrl = (url) => {
 };
 
 // Recursive function to build the file tree
-const fetchFileTree = async (url, depth = 0, parentNode = null) => {
+const fetchFileTree = async (url = podUri, depth = 0, parentNode = null) => {
   isLoading.value = true;
   try {
     const dataset = await getSolidDataset(url, { fetch: getDefaultSession().fetch });
@@ -59,6 +59,7 @@ const fetchFileTree = async (url, depth = 0, parentNode = null) => {
             label: getSubdirectoriesFromUrl(resource),
             children: [],
           };
+          // console.log("Found Node:", node.key);
           if (parentNode) {
             parentNode.children.push(node);
           } else {
@@ -83,7 +84,7 @@ onMounted(() => {
   fetchFileTree(props.podUri);
 });
 
-// Watch for changes in expandedKeys
+// Watch for changes in selectedKeys
 watch(selectedKey, (newKey) => {
   emit('updateSelection', newKey);
 });
