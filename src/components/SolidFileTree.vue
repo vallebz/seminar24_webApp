@@ -1,6 +1,5 @@
 <template>
   <div>
-	<h2 style="text-align: center;">Solid Pod Files</h2>
     <div v-if="isLoading">Loading files...</div>
     <div class="card" v-if="!isLoading">
       <Tree v-model:expandedKeys="expandedKeys" :value="treeNodes" selectionMode="single" v-model:selectionKeys="selectedKey" />
@@ -81,6 +80,9 @@ const fetchFileTree = async (url = podUri, depth = 0, parentNode = null) => {
 
 // Load the file tree on component mount
 onMounted(() => {
+  treeNodes.value = [];
+  selectedKey.value = null;
+  expandedKeys.value = {};
   fetchFileTree(props.podUri);
 });
 
@@ -88,31 +90,15 @@ onMounted(() => {
 watch(selectedKey, (newKey) => {
   emit('updateSelection', newKey);
 });
-
 </script>
 
 <style scoped>
 .card {
 min-width: 500px;
+margin: 10px;
 }
 ul {
-/* list-style-type: disc; */
-/* list-style-type: decimal; */
 list-style-type: square;
-/* list-style-type: none; */
-/* list-style-type: lower-alpha; */
-/* list-style-type: upper-alpha; */
-/* list-style-type: lower-roman; */
-/* list-style-type: upper-roman; */
-/* list-style-type: decimal-leading-zero; */
-/* list-style-type: georgian; */
-/* list-style-type: armenian; */
-/* list-style-type: hebrew; */
-/* list-style-type: cjk-ideographic; */
-/* list-style-type: hiragana; */
-/* list-style-type: katakana; */
-/* list-style-type: hiragana-iroha; */
-/* list-style-type: katakana-iroha; */
 }
 
 .p-button {

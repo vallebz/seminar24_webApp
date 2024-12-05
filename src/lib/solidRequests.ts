@@ -393,10 +393,11 @@ export function validateText(input: string): Boolean {
  * 
  * This function isolates the URI from the more general solidAdress
  */
-export function getOwnURI(solidAdress: string | undefined): string{
+export function getBaseURI(solidAdress: string | undefined): string{
       const solidAdresses = solidAdress?.split("profile");
       // @ts-ignore: Unreachable code error
       const ownURI = solidAdresses[0].toString();
+      console.log("Solid Pod Base URI:\n" + ownURI);
       return ownURI;
 }
 

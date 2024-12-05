@@ -1,11 +1,10 @@
 <script setup>
-import MainView from './components/MainView.vue'
 import HeaderBar from './components/standard/HeaderBar.vue'
 </script>
 
 <template>
   <HeaderBar style="z-index: 10;" />
-  <MainView style="z-index: 1;" />
+  <router-view />
 </template>
 
 <style lang="scss">

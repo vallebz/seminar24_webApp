@@ -1,12 +1,10 @@
 <template>
 	<div class="main">
-		<div>
-			<h1>This is the main view</h1>
-		</div><br />
 		<p v-if="!showResBody">
 			Welcome to the Demo. Please log in to your Solid Pod...
 		</p>
 		<div v-if="showResBody">
+			<h2 style="text-align: center;">Add new file to Solid Pod</h2><br />
 			<FloatLabel variant="in">
 				<Textarea v-model="textValue" autoResize rows="5" cols="80" />
 				<label>{{ labelText }}</label>
@@ -14,11 +12,20 @@
 			<FloatLabel variant="in" v-if="!isDisabledPost">
 				<InputText v-model="postUriValue" style="width: 100%;" />	
 				<label>{{ labelURI }}</label>
-			</FloatLabel>
+			</FloatLabel><br />
 			<div style="text-align: center;">
-				<Button @click="addResPod" :disabled="isDisabledPost">Add Resource to Pod</Button>
+				<Button @click="addResPod" :disabled="isDisabledPost">Add Resource</Button>
 			</div>
-			<SolidFileTree @updateSelection="handleUpdateSelection" v-if="sessionInfo.isLoggedIn" :podUri="getBaseUriFromKnownUrl(sessionInfo.webId)" />
+			<SolidFileTree @updateSelection="handleUpdateSelection" v-if="sessionInfo.isLoggedIn" :podUri="getBaseUri(sessionInfo.webId)" />
+		</div>
+		<div style="text-align: center;">
+			<h2>HTTP localhost</h2>
+			<Button @click="getResServer">HTTP GET</Button><br />
+			<Textarea v-model="textValueServer" autoResize rows="5" cols="80" />
+		</div>
+		<div style="text-align: center; margin-top: 50px;">
+			<img v-if="qrCodeUrl" :src="qrCodeUrl" alt="Generated QR Code" />
+			<p v-else>Waiting for QR-Code...</p>
 		</div>
 	</div>
 	<Toast position="bottom-right" />
@@ -29,51 +36,64 @@ import SolidFileTree from "/src/components/SolidFileTree.vue"
 
 import { ref, reactive, onMounted, watch } from "vue"
 import { useToast } from "primevue/usetoast"
-
 import { useSolidSession } from "/src/composables/useSolidSession"
 import { getResource, postResource, putResource, parseToN3 } from "/src/lib/solidRequests"
+import { parseLinkHeader } from "/src/lib/handleHeaders"
+import QRCode from "qrcode";
+
 
 const { sessionInfo } = useSolidSession()
 const toast = useToast()
 
-const displayedWebId = ref("Nicht verfügbar.")
-
 const showResBody = ref(false)
-
 const selectedFile = ref(null)
 const isParentNode = ref(false)
-
-const postUriValue = ref("")
-const labelURI = ref("Insert URI to post resource to:")
-
-const textValue = ref("")
-const labelText = ref("Insert text and post to path or select a file below to get its content:")
-
 const isDisabledPost = ref(false)
-const isDisabledGet = ref(false)
+const postUriValue = ref("")
+const labelURI = ref("Enter URI:")
+const textValue = ref("")
+const labelText = ref("Enter content:")
+const textValueServer = ref("")
+const qrCodeUrl = ref(null)
 
-function handleUpdateSelection(data) {
-	selectedFile.value = Object.keys(data)[0];
-	isParentNode.value = Object.keys(data)[0].endsWith("/");
-}
 
-function getBaseUriFromKnownUrl(url) {
-	try {
-		// Create a URL object to manipulate the path
-		const urlObj = new URL(url);
-		
-		// Remove any subdirectories and fragment by setting the pathname to "/" and hash to ""
-		urlObj.pathname = "/";
-		urlObj.hash = "";
-
-		console.log("Solid Pod Base URI:\n" + urlObj.href);
-		
-		return urlObj.href;
-	} catch (error) {
-		console.error("Invalid URL provided:", error);
-		return null;
+async function getResServer() {
+	const url = "http://localhost:8080/resource"
+	const response = await fetch(url)
+	textValueServer.value = await response.text()
+	const linkHeader = response.headers.get('link')
+	if (!linkHeader) {
+		toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "No link header.",
+            life: 5000,
+		})
+		return
 	}
+
+	const link = await parseLinkHeader(linkHeader)
+	const firstLink = link[Object.keys(link)[0]]
+	console.log('Link header:', firstLink)
+	textValueServer.value += "\n\n" + firstLink
+
+	QRCode.toDataURL(firstLink)
+      .then((url) => {
+        qrCodeUrl.value = url;
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+
+
+	toast.add({
+				severity: "success",
+				detail: "Successfuly added resource.",
+				life: 3000,
+			})
 }
+
+
 
 /**
  * HTTP GET request to retrieve selected resource from User's Solid Pod
@@ -103,20 +123,11 @@ async function getResPod() {
 	}
 
 	labelText.value = selectedFile.value
-
-	const resBody = await getResource(selectedFile.value).then((resp) => resp.text())
-	textValue.value = resBody
-	// showResBody.value = true
-
-	toast.add({
-		severity: "success",
-		detail: "Successfuly requested resource.",
-		life: 5000,
-	})
+	textValue.value = await getResource(selectedFile.value).then((resp) => resp.text())
 }
 
 /**
- * HTTP POST request to create a new resource in User's Solid Pod
+ * HTTP PUT request to create a new resource in User's Solid Pod
  * @param URI: path of resource to create
  * @param body: content of resource to create
  * @returns status of request
@@ -149,7 +160,7 @@ async function addResPod() {
 			toast.add({
 				severity: "success",
 				detail: "Successfuly added resource.",
-				life: 5000,
+				life: 3000,
 			})
 		} else {
 			toast.add({
@@ -162,6 +173,48 @@ async function addResPod() {
 	})
 
 }
+
+/**
+ * Extract the base URI of the Solid Pod from the WebID or any other known URL
+ * @param url: known WebID URI of the Solid Pod
+ * @returns base URI of the Solid Pod
+ */
+function getBaseUri(url) {
+	try {
+		// Create a URL object to manipulate the path
+		const urlObj = new URL(url);
+		
+		// Remove any subdirectories and fragment by setting the pathname to "/" and hash to ""
+		urlObj.pathname = "/";
+		urlObj.hash = "";
+
+		console.log("Solid Pod Base URI:\n" + urlObj.href);
+		
+		return urlObj.href;
+	} catch (error) {
+		console.error("Invalid URL provided:", error);
+		return null;
+	}
+}
+
+/**
+ * Automated functions
+ * 
+ */
+
+// Update the selected file
+function handleUpdateSelection(data) {
+	selectedFile.value = Object.keys(data)[0];
+	isParentNode.value = Object.keys(data)[0].endsWith("/");
+}
+
+// Mount `sessionInfo.isLoggedIn`
+onMounted(
+	() => sessionInfo.isLoggedIn,
+	(newVal) => {
+		showResBody.value = newVal;
+	}
+);
 
 // Watch `sessionInfo.isLoggedIn`
 watch(
@@ -177,7 +230,6 @@ watch(
 		if (newVal && !isParentNode.value) {
 			getResPod();
 			isDisabledPost.value = true;
-			isDisabledGet.value = false;
 		}
 		else {
 			textValue.value = "";
@@ -185,13 +237,12 @@ watch(
 			postUriValue.value = selectedFile.value;
 			labelURI.value = "Complete URI with filename:";
 			isDisabledPost.value = false;
-			isDisabledGet.value = true;
 		}
   }
 );
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 
 .main {
 	display: flex;
