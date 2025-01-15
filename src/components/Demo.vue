@@ -7,13 +7,21 @@
 			<div>
 				<Step_1 v-if="stepRef == 1" :podUriValue="demoPodURI" @selectedFile="selectFile" />
 				<Step_2 v-else-if="stepRef == 2" :fileURI="selectedFileURI"
-					@authenticationRequired="displayRequestObjectLink" />
+					@authenticationRequired="displayRequestObjectLink" @success="endDemo" />
 				<Step_3 v-else-if="stepRef == 3" :requestObjectLink="requestObjectLink" />
 			</div>
 			<div class="flex justify-content-center">
-				<Button rounded @click="navigateToNextStep" :disabled="stepRef > 0 && !selectedFileURI">
+				<Button rounded @click="navigateToNextStep" v-if="!successfulAccess"
+					:disabled="(stepRef > 0 && !selectedFileURI)">
 					{{ stepRef == 0 ? "Start Demo" : "Next Step" }}
 				</Button>
+				<div v-else class="flex flex-column align-items-center justify-content-center">
+					<Button severity="info" label="Success!" disabled />
+					<div>
+						Delete your cookies and reload the page if you want to try again!
+					</div>
+				</div>
+
 			</div>
 		</div>
 	</div>
@@ -50,6 +58,11 @@ function navigateToNextStep() {
 const selectedFileURI = ref();
 function selectFile(uri) {
 	selectedFileURI.value = uri;
+}
+
+const successfulAccess = ref(false);
+function endDemo() {
+	successfulAccess.value = true
 }
 
 const requestObjectLink = ref();

@@ -13,7 +13,7 @@ import { parseLinkHeader } from "/src/lib/handleHeaders"
 const toast = useToast()
 
 const props = defineProps(['fileURI']);
-const emit = defineEmits(['authenticationRequired']);
+const emit = defineEmits(['authenticationRequired','success']);
 
 const txt = ref("File loading...")
 
@@ -22,11 +22,12 @@ async function getResServer() {
 	if (response.ok) {
 		toast.add({
 			severity: 'success',
-			summary: "" + response.status,
-			detail: "" + response.statusText,
+			summary: "You got it." ,
+			detail: "Successful resource access",
 			life: 5000
 		});
 		txt.value = await response.text();
+		emit('success')
 	} else {
 		toast.add({
 			severity: 'error',
@@ -47,6 +48,7 @@ async function getResServer() {
 		const link = await parseLinkHeader(linkHeader)
 		const firstLink = link[Object.keys(link)[0]];
 		emit('authenticationRequired', firstLink)
+		txt.value = "Authentication required. Go to next step."
 	}
 }
 
