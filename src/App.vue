@@ -1,10 +1,12 @@
 <script setup>
 import HeaderBar from './components/standard/HeaderBar.vue'
+import Demo from './components/Demo.vue'
 </script>
 
 <template>
   <HeaderBar style="z-index: 10;" />
-  <router-view />
+  <Demo />
+  <Toast position="bottom-right" />
 </template>
 
 <style lang="scss">

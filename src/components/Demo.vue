@@ -1,57 +1,66 @@
-<template lang="html">
-	<router-link to="/">Restart Demo</router-link>
-	<div class="main">
-		<p v-if="!showResBody">
-			Welcome to the Demo. Please log in to your Solid Pod...
+<template>
+	<div class="flex justify-content-center">
+		<p v-if="!isLoggedIn">
+			<span> Welcome to the Demo. Please log in to your Solid Pod... </span>
 		</p>
-		<div v-if="showResBody">
-			<router-view />
+		<div v-else>
+			<div>
+				<Step_1 v-if="stepRef == 1" :podUriValue="demoPodURI" @selectedFile="selectFile" />
+				<Step_2 v-else-if="stepRef == 2" :fileURI="selectedFileURI"
+					@authenticationRequired="displayRequestObjectLink" />
+				<Step_3 v-else-if="stepRef == 3" :requestObjectLink="requestObjectLink" />
+			</div>
+			<div class="flex justify-content-center">
+				<Button rounded @click="navigateToNextStep" :disabled="stepRef > 0 && !selectedFileURI">
+					{{ stepRef == 0 ? "Start Demo" : "Next Step" }}
+				</Button>
+			</div>
 		</div>
 	</div>
-	<Toast position="bottom-right" />
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router';
-import { ref, onMounted, watch } from "vue"
+import { ref, watch } from "vue"
 import { useSolidSession } from "/src/composables/useSolidSession"
+import Step_1 from './Step_1.vue';
+import Step_2 from './Step_2.vue';
+import Step_3 from './Step_3.vue';
+
 
 const { sessionInfo } = useSolidSession()
-
-const showResBody = ref(false)
-
-// // Mount `sessionInfo.isLoggedIn`
-// onMounted(
-// 	() => sessionInfo.isLoggedIn,
-// 	(newVal) => {
-// 		showResBody.value = newVal;
-// 		console.log('New login status:', newVal);
-// 	}
-// );
-
-// Watch `sessionInfo.isLoggedIn`
+const isLoggedIn = ref(false)
 watch(
-  () => sessionInfo.isLoggedIn,
-  (newVal) => {
-	  showResBody.value = newVal;
-	console.log('New login status:', newVal);
-  }
+	() => sessionInfo.isLoggedIn,
+	(newVal) => {
+		isLoggedIn.value = newVal;
+		console.log('New login status:', newVal);
+	}
 );
 
+const demoPodURI = "https://sme.solid.aifb.kit.edu/bookings/";
+
+const stepRef = ref(0);
+function navigateToNextStep() {
+	stepRef.value++
+	if (stepRef.value > 3) {
+		stepRef.value = 1
+	}
+}
+
+const selectedFileURI = ref();
+function selectFile(uri) {
+	selectedFileURI.value = uri;
+}
+
+const requestObjectLink = ref();
+function displayRequestObjectLink(uri) {
+	requestObjectLink.value = uri
+}
 </script>
 
 <style lang="scss">
-.main {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	margin: 20px;
-	padding-bottom: 20px;
-}
-
 .p-button {
-  margin: 10px;
+	margin: 10px;
 }
 
 .p-panel {
@@ -60,4 +69,5 @@ watch(
 
 .p-blockUI {
 	margin: 10px;
-}</style>
+}
+</style>
