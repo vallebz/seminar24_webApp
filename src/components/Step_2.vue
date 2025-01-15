@@ -18,7 +18,7 @@ const emit = defineEmits(['authenticationRequired']);
 const txt = ref("File loading...")
 
 async function getResServer() {
-	const response = await fetch(props.fileURI)
+	const response = await fetch(props.fileURI, { credentials: 'include' })
 	if (response.ok) {
 		toast.add({
 			severity: 'success',
